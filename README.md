@@ -4,8 +4,8 @@
 
 ## 项目结构
 
-```
-C:\python\tongue\
+```text
+Tongue-Diagnosis-Agent/
 ├── data/
 │   ├── fissure/                          # 舌裂原始标注 (LabelMe JSON)
 │   │   ├── annotate/                     #   有舌裂: 892 张
@@ -41,16 +41,16 @@ C:\python\tongue\
     │   ├── pidnet_segment_all.py         #   PIDNet批量推理
     │   ├── prepare_yolo_dataset_v2.py    #   数据集构建
     │   └── build_llm_dataset_v2.py       #   LLM数据集生成
-    └── runs/detect/tongue_detect/        #   训练输出
+    └── runs/detect/runs/tongue_detect/   #   训练输出
         └── weights/best.pt               #   最佳YOLO模型
 ```
 
 ## 流水线
 
-```
+```text
 舌图 → PIDNet分割舌体(遮罩背景) → YOLOv8检测齿痕/舌裂 → +患者病历 → LLM诊断
                                     ↓
-                            齿痕个数 + 舌裂个数 + 位置
+                          齿痕个数 + 舌裂个数 + 位置
 ```
 
 ## 模型
@@ -58,44 +58,54 @@ C:\python\tongue\
 | 模型 | 任务 | 性能 | 权重路径 |
 |------|------|------|----------|
 | PIDNet-S | 舌体分割 | mIoU 0.9883 | `tongue PID segmentation/tools/output/tongue/.../best.pt` |
-| YOLOv8s | 齿痕+舌裂检测 | mAP50 0.574 | `tongue YOLO detection/runs/detect/tongue_detect/weights/best.pt` |
+| YOLOv8s | 齿痕+舌裂检测 | mAP50 0.574 | `tongue YOLO detection/runs/detect/runs/tongue_detect/weights/best.pt` |
+
+## 实验结果展示
+
+YOLOv8s 在掩膜处理后的舌象数据上，对齿痕（teeth_mark）与舌裂（fissure）的检测效果对比：
+
+<p align="center">
+  <strong>真实标注 (Ground Truth)</strong><br>
+  <img src="tongue%20YOLO%20detection/runs/detect/runs/tongue_detect/val_batch0_labels.jpg" width="800" alt="Validation Batch 0 Labels">
+</p>
+
+<p align="center">
+  <strong>模型预测 (Predictions)</strong><br>
+  <img src="tongue%20YOLO%20detection/runs/detect/runs/tongue_detect/val_batch0_pred.jpg" width="800" alt="Validation Batch 0 Predictions">
+</p>
 
 ## 快速开始
 
-### 环境
+### 0. 环境准备
 
+推荐使用 Conda 管理环境。请确保您已安装所需依赖：
 ```bash
-# 使用 vmorph conda 环境
-C:/Users/35143/anaconda3/envs/vmorph/python.exe
-# torch 2.7.1+cu118, ultralytics 8.4.71, CUDA 11.8
+conda activate vmorph
+# 环境依赖: torch 2.7.1+cu118, ultralytics 8.4.71, CUDA 11.8
 ```
+
+> **注意：** 以下所有命令均需在 `Tongue-Diagnosis-Agent` 项目根目录下运行。
 
 ### 1. PIDNet 分割
 
+对所有 YOLO 数据集图片做舌体分割，输出 mask 和遮罩图：
 ```bash
-cd "C:/python/tongue"
 python "tongue YOLO detection/scripts/pidnet_segment_all.py"
 ```
 
-对所有 YOLO 数据集图片做舌体分割，输出 mask 和遮罩图。
-
 ### 2. YOLOv8 训练
 
+在遮罩图上训练齿痕+舌裂检测：
 ```bash
-cd "C:/python/tongue"
 python "tongue YOLO detection/scripts/train_yolo.py"
 ```
 
-在遮罩图上训练齿痕+舌裂检测。
-
 ### 3. 生成 LLM 数据集
 
+匹配舌图编号与患者病历（`全_16000例_去掉姓名和隐私信息.xlsx`），生成三种格式的 LLM 训练数据：
 ```bash
-cd "C:/python/tongue"
 python "tongue YOLO detection/scripts/build_llm_dataset_v2.py"
 ```
-
-匹配舌图编号与患者病历（`全_16000例_去掉姓名和隐私信息.xlsx`），生成三种格式的 LLM 训练数据。
 
 ## 数据集统计
 
@@ -123,14 +133,12 @@ python "tongue YOLO detection/scripts/build_llm_dataset_v2.py"
 }
 ```
 
-input 只放推理时可获得的信息（患者基础信息 + YOLO AI检测结果），output 是 LLM 需要学会预测的诊断结论。
-
 ### LLaVA (多模态)
 
 ```json
 {
   "id": "1000125596",
-  "image": "C:/python/tongue/data/yolo_dataset/images_original/train/1000125596.jpg",
+  "image": "data/yolo_dataset/images_original/train/1000125596.jpg",
   "conversations": [
     {"from": "human", "value": "<image>\n患者：男，55岁\nBMI：17.1\nAI检测：舌裂0处，齿痕0处"},
     {"from": "gpt", "value": "舌象：舌色淡红，苔黄薄，舌有裂纹\n体质：平和质\n诊断：慢性萎缩性胃炎"}
