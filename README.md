@@ -68,7 +68,6 @@ C:\python\tongue\
 # 使用 vmorph conda 环境
 C:/Users/35143/anaconda3/envs/vmorph/python.exe
 # torch 2.7.1+cu118, ultralytics 8.4.71, CUDA 11.8
-# GPU: RTX 4060 Laptop 8GB
 ```
 
 ### 1. PIDNet 分割
